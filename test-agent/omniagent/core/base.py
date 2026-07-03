@@ -113,3 +113,6 @@ class Agent:
             "task_history": self._task_history[-50:],
             "memory_keys": list(self.memory.keys())
         }
+
+
+BaseAgent = Agent
