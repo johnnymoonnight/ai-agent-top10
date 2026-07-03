@@ -93,3 +93,6 @@ class Orchestrator:
 
     def get_history(self, limit: int = 10) -> List[Dict]:
         return self._history[-limit:]
+
+
+AgentOrchestrator = Orchestrator
