@@ -20,6 +20,8 @@ from omniagent.observability import Tracer, Evaluator, SpanStatus, EvalResult
 from omniagent.plugins import PluginManager, PluginBase, PluginManifest
 from omniagent.web import AgentWebUI
 from omniagent.llm import MockLLM, EchoLLM, LLMProvider
+from omniagent.agent import ConversationalAgent
+from omniagent.evolution import EvolutionEngine
 
 
 # ===== core/base =====
@@ -426,3 +428,103 @@ class TestIntegration:
         mem.save(MemoryItem(content="context data", memory_type="semantic"))
         results = await o.run_sequential(["mem_agent"], "use context")
         assert len(results) == 1
+
+
+# ===== agent (ConversationalAgent) =====
+
+class TestConversationalAgent:
+    @pytest.mark.asyncio
+    async def test_chat_returns_response(self):
+        agent = ConversationalAgent(name="TestClone")
+        response = await agent.chat("hello")
+        assert len(response) > 0
+
+    @pytest.mark.asyncio
+    async def test_chat_uses_handler(self):
+        agent = ConversationalAgent(name="Test")
+        async def my_handler(_):
+            return "custom handler response"
+        agent.register_response_handler(r"^ping$", my_handler)
+        response = await agent.chat("ping")
+        assert response == "custom handler response"
+
+    @pytest.mark.asyncio
+    async def test_chat_with_memory(self):
+        mem = MemoryStore(db_path=":memory:")
+        agent = ConversationalAgent(name="MemAgent", memory_store=mem)
+        await agent.chat("remember this")
+        stats = mem.consolidate()
+        assert stats["total"] >= 1
+
+    def test_history_maintained(self):
+        agent = ConversationalAgent(name="HistAgent")
+        asyncio.run(agent.chat("msg1"))
+        asyncio.run(agent.chat("msg2"))
+        assert len([m for m in agent.conversation_history if m.role == "user"]) == 2
+
+    @pytest.mark.asyncio
+    async def test_fallback_for_unknown(self):
+        agent = ConversationalAgent(name="Fallback")
+        response = await agent.chat("xyznonexistent12345")
+        assert "xyznonexistent12345" in response
+
+    def test_reflect_returns_string(self):
+        agent = ConversationalAgent(name="Reflector")
+        reflection = agent._reflect()
+        assert "Self-Reflection" in reflection
+
+    def test_get_status(self):
+        agent = ConversationalAgent(name="StatusBot")
+        status = agent._get_status()
+        assert status is not None and len(status) > 0
+
+    def test_save_state(self):
+        agent = ConversationalAgent(name="SaveBot")
+        result = agent._save_state()
+        assert result is not None
+
+    @pytest.mark.asyncio
+    async def test_github_learning(self):
+        agent = ConversationalAgent(name="LearnBot")
+        response = await agent.chat("learn from github rag")
+        assert "Learned" in response or "learning" in response.lower()
+
+    @pytest.mark.asyncio
+    async def test_capabilities_query(self):
+        agent = ConversationalAgent(name="CapBot")
+        response = await agent.chat("what can you do")
+        assert "tool" in response.lower() or "memory" in response.lower()
+
+    @pytest.mark.asyncio
+    async def test_help_command(self):
+        agent = ConversationalAgent(name="HelpBot")
+        response = await agent.chat("help")
+        assert "command" in response.lower() or "help" in response.lower()
+
+
+# ===== evolution =====
+
+class TestEvolution:
+    def test_builtin_ideas_loaded(self):
+        engine = EvolutionEngine()
+        assert len(engine.ideas) >= 3
+
+    @pytest.mark.asyncio
+    async def test_learn_from_github(self):
+        engine = EvolutionEngine()
+        report = await engine.learn_from_github("agent")
+        assert report.ideas_found >= 1
+        assert len(report.suggestions) >= 1
+
+    @pytest.mark.asyncio
+    async def test_evolve(self):
+        engine = EvolutionEngine()
+        await engine.learn_from_github("tools")
+        report = await engine.evolve()
+        assert report.ideas_implemented >= 0
+
+    def test_get_stats(self):
+        engine = EvolutionEngine()
+        stats = engine.get_stats()
+        assert "total_ideas" in stats
+        assert "evolution_cycles" in stats
