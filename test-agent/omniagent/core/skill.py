@@ -76,3 +76,8 @@ class SkillRegistry:
         ]
         for s in builtins:
             self.register(s)
+
+
+class SkillBase(Skill):
+    """兼容别名 - 等同于 Skill"""
+    pass
