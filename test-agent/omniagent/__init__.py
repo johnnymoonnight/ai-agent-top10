@@ -7,6 +7,7 @@ from .core.base import Agent, AgentConfig, AgentStatus, BaseAgent
 from .core.orchestrator import Orchestrator, AgentOrchestrator
 from .core.skill import Skill, SkillRegistry, SkillBase
 from .core.message import MessageBus, Message
+from .llm import MockLLM, EchoLLM, LLMProvider
 from .tools import ToolRegistry, CodeExecutor, WebSearch, FileSystem
 from .memory import MemoryStore, MemoryItem
 from .workflow import WorkflowEngine, WorkflowDefinition, WorkflowStep
@@ -19,6 +20,7 @@ from .web import AgentWebUI
 __all__ = [
     "BaseAgent", "Agent", "AgentConfig", "AgentStatus", "AgentOrchestrator", "Orchestrator", "Skill", "SkillRegistry", "SkillBase",
     "MessageBus", "Message",
+    "MockLLM", "EchoLLM", "LLMProvider",
     "ToolRegistry", "CodeExecutor", "WebSearch", "FileSystem",
     "MemoryStore", "MemoryItem",
     "WorkflowEngine", "WorkflowDefinition", "WorkflowStep",
