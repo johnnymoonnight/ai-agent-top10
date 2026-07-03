@@ -121,3 +121,6 @@ class ToolRegistry:
 
     def list_tools(self) -> List[Dict]:
         return [t.to_dict() for t in self._tools.values()]
+
+
+ToolRegistry = ToolRegistry
