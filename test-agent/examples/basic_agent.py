@@ -1,23 +1,20 @@
 """基础单智能体示例"""
 import asyncio
-from omniagent import BaseAgent, SkillRegistry, SkillBase, ToolRegistry
-
-class GreetSkill(SkillBase):
-    def __init__(self):
-        super().__init__("greet", "Say hello")
-
-    async def execute(self, params: dict) -> str:
-        return f"Hello, {params.get('name', 'world')}!"
+from omniagent import BaseAgent, AgentConfig, SkillRegistry, Skill, ToolRegistry, WebSearch
 
 async def main():
     registry = SkillRegistry()
-    registry.register(GreetSkill())
+    registry.register(Skill(name="greet", description="Say hello"))
 
     tools = ToolRegistry()
-    tools.register(GreetSkill())
+    tools.register(WebSearch())
 
-    agent = BaseAgent(name="OmniAgent", skill_registry=registry, tool_registry=tools)
-    result = await agent.execute({"task": "greet", "name": "OmniAgent"})
-    print(result)
+    agent = BaseAgent(AgentConfig(name="OmniAgent", goal="assist user"))
+    plan = await agent.think("test")
+    print(f"Plan: {plan}")
+    result = await agent.act("greet\nanalyze")
+    print(f"Result: {result}")
+    state = agent.save_state()
+    print(f"State: {len(state['task_history'])} tasks")
 
 asyncio.run(main())
